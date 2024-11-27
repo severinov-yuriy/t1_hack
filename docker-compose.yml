@@ -26,7 +26,7 @@ services:
 
   milvus:
     container_name: milvus
-    image: milvusdb/milvus:2.3.1
+    image: milvusdb/milvus:latest
     ports:
       - "19530:19530"
       - "9091:9091"
@@ -35,7 +35,7 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: ./RAG
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
@@ -43,9 +43,9 @@ services:
       - database
       - milvus
     environment:
-      DATABASE_URL=postgresql://user:password@database:5432/rag
-      MILVUS_HOST=milvus
-      MILVUS_PORT=19530
+      DATABASE_URL: "postgresql://user:password@database:5432/rag"
+      MILVUS_HOST: "milvus"
+      MILVUS_PORT: "19530"
 
 volumes:
   db_data:

@@ -5,15 +5,16 @@ from core.api_clients import OpenAIAPIClient, CustomAPIClient, OpenRouterAPIClie
 
 router = APIRouter()
 
-VECTOR_STORE_PATH = "data/vector_store.index"
-DB_PATH = "data/chunks.db"
+# Конфигурация подключения
+MILVUS_HOST = "milvus"`
+MILVUS_PORT = "19530"
 VECTOR_DIM = 384
 
 # Конфигурация клиентов API
 API_CLIENTS = {
     "openai": OpenAIAPIClient,
     "custom": CustomAPIClient,
-    "openrouter": OpenRouterAPIClient
+    "openrouter": OpenRouterAPIClient,
 }
 
 
@@ -34,9 +35,10 @@ async def handle_query(request: QueryRequest):
     try:
         # Инициализируем RAG-пайплайн
         rag = RAGPipeline(
-            vector_store_path=VECTOR_STORE_PATH,
-            db_path=DB_PATH,
-            vector_dim=VECTOR_DIM
+            db_url=DB_URL,
+            milvus_host=MILVUS_HOST,
+            milvus_port=MILVUS_PORT,
+            vector_dim=VECTOR_DIM,
         )
 
         # Инициализируем API-клиент
@@ -55,7 +57,7 @@ async def handle_query(request: QueryRequest):
             query=request.query,
             api_client=api_client,
             top_k=request.top_k,
-            model=request.model_name
+            model=request.model_name,
         )
 
         return response

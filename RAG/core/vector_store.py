@@ -5,7 +5,7 @@ from typing import List, Tuple
 import numpy as np
 
 # Подключение к PostgreSQL
-DATABASE_URL = "postgresql://user:password@postgres:5432/rag"
+DATABASE_URL = "postgresql://user:password@database:5432/rag"
 
 # SQLAlchemy Engine и Metadata
 engine = create_engine(DATABASE_URL)

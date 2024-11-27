@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from typing import List, Dict
 
 # Подключение к базе данных PostgreSQL
-DATABASE_URL = "postgresql://user:password@localhost:5432/rag"
+DATABASE_URL = "postgresql://user:password@database:5432/rag"
 
 # Создаем движок SQLAlchemy и метаданные
 engine = create_engine(DATABASE_URL)
