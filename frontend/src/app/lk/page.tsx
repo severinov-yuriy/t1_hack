@@ -3,7 +3,7 @@ import { MainContainer } from '@/components/MainContainer';
 
 const page = () => {
   return (
-    <MainContainer>
+    <MainContainer className="mx-auto py-4">
       <ChatList />
     </MainContainer>
   );
