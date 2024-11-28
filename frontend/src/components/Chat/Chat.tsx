@@ -19,8 +19,8 @@ export const Chat: FC<ChatProps> = (props) => {
   const [message, setMessage] = useState('');
   const { handleSubmit } = useForm<{ message: string }>();
 
-  const onSendMessage = async (data: { message: string }) => {
-    setMessages((messages) => [...messages, { message: data.message, sender: 'user' }]);
+  const onSendMessage = async () => {
+    setMessages((messages) => [...messages, { message, sender: 'user' }]);
     setMessage('');
     const chat: { id: string; name: string; modelType: string; apiKey: string; apiUrl: string } =
       JSON.parse(localStorage.getItem('chats') ?? '[]').find(
@@ -30,7 +30,7 @@ export const Chat: FC<ChatProps> = (props) => {
     const response = await fetch('http://backend:8000/query', {
       method: 'POST',
       body: JSON.stringify({
-        query: data.message,
+        query: message,
         api_type: chat.modelType,
         api_key: chat.apiKey,
         api_url: chat.apiUrl,
@@ -57,6 +57,8 @@ export const Chat: FC<ChatProps> = (props) => {
         {messages?.map((message, i) => (
           <ChatMessage
             key={`${message.message}-${i}`}
+            contextFiles={message.contextFiles}
+            fallback={message.sender === 'ai' ? 'AI' : 'Вы'}
             orientation={message.sender === 'ai' ? 'left' : 'right'}
           >
             {message.message}
