@@ -10,5 +10,5 @@ interface MainContainerProps {
 export const MainContainer: FC<MainContainerProps> = (props) => {
   const { className, children } = props;
 
-  return <div className={cn('max-w-7xl', className)}>{children}</div>;
+  return <div className={cn('max-w-5xl', className)}>{children}</div>;
 };

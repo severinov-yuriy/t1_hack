@@ -5,6 +5,7 @@ import './globals.css';
 import Link from 'next/link';
 import { MainContainer } from '@/components/MainContainer';
 import { Button } from '@/components/ui/button';
+import { router } from '@/lib/router';
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -30,13 +31,13 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   return (
     <html className="h-full" lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-full dark`}>
-        <header className="sticky top-0 z-50 flex justify-center items-center border-b border-border bg-transparent px-4 py-2 backdrop-blur">
+        <header className="flex justify-center items-center border-b border-border bg-transparent px-4 py-2 backdrop-blur">
           <MainContainer className="flex justify-center gap-7 flex-1">
             <Link className="text-2xl font-bold tracking-tight" href="/">
               Home
             </Link>
-            <Link className="text-2xl font-bold tracking-tight" href="/">
-              Chat
+            <Link className="text-2xl font-bold tracking-tight" href={router.newChat()}>
+              Новый чат
             </Link>
             <Link className="text-2xl font-bold tracking-tight" href="/">
               Get started
@@ -46,10 +47,10 @@ const RootLayout = ({ children }: RootLayoutProps) => {
             </Link>
           </MainContainer>
           <Button variant="outline">
-            <Link href="/signin">Sign in</Link>
+            <Link href={router.signIn()}>Sign in</Link>
           </Button>
         </header>
-        <div className="h-full">{children}</div>
+        {children}
       </body>
     </html>
   );
