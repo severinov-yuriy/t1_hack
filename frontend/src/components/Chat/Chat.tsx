@@ -1,6 +1,6 @@
 'use client';
 
-import { set, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { ChatContent } from './ChatContent';
 import { ChatInput } from './ChatInput';
 import { ChatMessage } from './ChatMessage';

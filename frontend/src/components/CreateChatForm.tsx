@@ -59,15 +59,14 @@ export const CreateChatForm: FC<CreateChatFormProps> = (props) => {
     localStorage.setItem('chats', JSON.stringify([...chats, newChat]));
 
     setIsLoading(true);
+    nextRouter.push(router.chat(newChat.id));
 
     const response = await fetch('http://backend:8000/upload', {
       method: 'POST',
       body: formData,
     });
 
-    if (response.ok) {
-      nextRouter.push(router.chat(newChat.id));
-    }
+    console.log(response);
   };
 
   return (
