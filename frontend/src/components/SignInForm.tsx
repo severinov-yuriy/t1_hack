@@ -82,7 +82,7 @@ export const SignInForm: FC<SingUpFormProps> = () => {
               control={form.control}
               name="password"
             />
-            <Button type="submit">Войти</Button>
+            <Button type="submit" onClick={() => window.location.href = '/chat/new'}>Войти</Button>
           </form>
         </Form>
       </CardContent>

@@ -138,9 +138,10 @@ export const CreateChatForm: FC<CreateChatFormProps> = (props) => {
               />
             )}
 
-            <Button disabled={!form.formState.isLoading} type="submit">
+            <Button type="submit" onClick={() => window.location.href = '/chat/1'}>
               Создать
             </Button>
+            
           </form>
         </Form>
       </CardContent>
