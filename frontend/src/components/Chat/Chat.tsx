@@ -27,7 +27,7 @@ export const Chat: FC<ChatProps> = (props) => {
         (chat: { id: string }) => chat.id.toString() === id,
       );
 
-    const response = await fetch('http://backend:8000/query', {
+    const response = await fetch('/query', {
       method: 'POST',
       body: JSON.stringify({
         query: message,

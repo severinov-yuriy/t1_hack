@@ -14,7 +14,7 @@ VECTOR_STORE_PATH = "data/vector_store.index"
 VECTOR_DIM = 384
 
 
-@router.post("/upload/")
+@router.post("/api/upload/")
 async def upload_archive(file: UploadFile):
     """
     Эндпоинт для загрузки архива документов.

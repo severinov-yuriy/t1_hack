@@ -9,8 +9,11 @@ services:
       - "3000:3000"
     environment:
       - REACT_APP_BACKEND_URL=http://backend:8000
+      - PUBLIC_API_URL=http://backend:8000
     depends_on:
       - backend
+    networks:
+      - app_network
 
   backend:
     build:
@@ -18,7 +21,12 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
-
+    networks:
+      - app_network
 
 volumes:
   db_user:
+
+networks:
+  app_network:
+    driver: bridge

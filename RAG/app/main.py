@@ -22,6 +22,6 @@ app.add_middleware(
 )
 
 # Точка входа для проверки статуса
-@app.get("/")
+@app.get("/api/")
 async def root():
     return {"message": "RAG Service is running"}
