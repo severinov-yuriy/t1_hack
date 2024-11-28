@@ -3,7 +3,7 @@ module.exports = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:8000/api/:path*' // Proxy to Backend
+        destination: 'http://backend:8000/api/:path*/' // Proxy to Backend
       }
     ]
   }

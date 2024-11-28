@@ -26,7 +26,7 @@ class QueryRequest(BaseModel):
     top_k: int = 1
 
 
-@router.post("/api/query/")
+@router.post("/query/")
 async def handle_query(request: QueryRequest):
     """
     Эндпоинт для обработки запросов пользователя с использованием RAG.

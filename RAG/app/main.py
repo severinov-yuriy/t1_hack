@@ -7,7 +7,7 @@ app = FastAPI(
     title="RAG Service",
     description="A Retrieval-Augmented Generation (RAG) Service for document-based Q&A",
     version="1.0.0"
-)
+    )
 
 # Регистрация маршрутов
 app.include_router(upload.router, prefix="/api", tags=["Upload"])
