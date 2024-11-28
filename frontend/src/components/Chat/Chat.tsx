@@ -20,6 +20,9 @@ export const Chat: FC<ChatProps> = (props) => {
   const { handleSubmit } = useForm<{ message: string }>();
 
   const onSendMessage = async () => {
+    if (!message) {
+      return;
+    }
     setMessages((messages) => [...messages, { message, sender: 'user' }]);
     setMessage('');
     const chat: { id: string; name: string; modelType: string; apiKey: string; apiUrl: string } =
