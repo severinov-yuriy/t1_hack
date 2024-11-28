@@ -9,6 +9,8 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Eye, EyeClosed } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { router } from '@/lib/router';
+import { useRouter } from 'next/navigation';
 
 interface SingUpFormProps {
   className?: string;
@@ -25,13 +27,22 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export const SignInForm: FC<SingUpFormProps> = () => {
+  const nextRouter = useRouter();
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
   const onSubmit = (data: FormData) => {
     console.log(data);
+    setIsLoading(true);
+    const promise = new Promise(() => {
+      setTimeout(() => {
+        nextRouter.push(router.lk());
+      }, 500);
+    });
+    promise.then(() => setIsLoading(false));
   };
 
   return (

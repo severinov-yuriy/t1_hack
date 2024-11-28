@@ -8,33 +8,47 @@ import { type FC, useState } from 'react';
 
 interface ChatProps {
   id: string;
-  initialMessages?: { sender: 'ai' | 'user'; message: string }[];
+  initialMessages?: { sender: 'ai' | 'user'; message: string; contextFiles?: string[] }[];
 }
+
+const defaultTopK = 10;
+
 export const Chat: FC<ChatProps> = (props) => {
-  const { id, initialMessages } = props;
-  const [messages, setMessages] = useState(initialMessages);
+  const { initialMessages, id } = props;
+  const [messages, setMessages] = useState(initialMessages ?? []);
+  const [message, setMessage] = useState('');
   const { handleSubmit } = useForm<{ message: string }>();
 
-  const onSendMessage = (data: { message: string }) => {
-    // setMessages((messages) => [...messages, { message: data.message, sender: 'user' }]);
-    // const response = await fetch('/api/chat/send', {
-    //   method: 'POST',
-    //   body: JSON.stringify({
-    //     message: data.message,
-    //     chatId: id,
-    //   }),
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    // })
-    // const data = await response.json();
-    // setMessages((messages) => [...messages, { message: data.message, sender: 'ai' }]);
+  const onSendMessage = async (data: { message: string }) => {
+    setMessages((messages) => [...messages, { message: data.message, sender: 'user' }]);
+    setMessage('');
+    const chat: { id: string; name: string; modelType: string; apiKey: string; apiUrl: string } =
+      JSON.parse(localStorage.getItem('chats') ?? '[]').find(
+        (chat: { id: string }) => chat.id.toString() === id,
+      );
 
-    // if (!response.ok) {
-    //   return;
-    // }
+    const response = await fetch('http://backend:8000/query', {
+      method: 'POST',
+      body: JSON.stringify({
+        query: data.message,
+        api_type: chat.modelType,
+        api_key: chat.apiKey,
+        api_url: chat.apiUrl,
+        top_k: defaultTopK,
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-    console.log(data, id, setMessages);
+    if (!response.ok) {
+      return;
+    }
+    const responseData = await response.json();
+    setMessages((messages) => [
+      ...messages,
+      { message: responseData.answer, contextFiles: responseData.contextFiles, sender: 'ai' },
+    ]);
   };
 
   return (
@@ -50,7 +64,12 @@ export const Chat: FC<ChatProps> = (props) => {
         ))}
       </ChatContent>
       <form onSubmit={handleSubmit(onSendMessage)}>
-        <ChatInput />
+        <ChatInput
+          value={message}
+          onChange={(e) => {
+            setMessage(e.target.value);
+          }}
+        />
       </form>
     </div>
   );

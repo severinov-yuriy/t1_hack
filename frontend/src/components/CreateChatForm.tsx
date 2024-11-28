@@ -3,7 +3,7 @@
 import { type FC, useState } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { useForm } from 'react-hook-form';
+import { set, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -20,13 +20,13 @@ import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
+import { useRouter } from 'next/navigation';
+import { router } from '@/lib/router';
 
 const schema = z.object({
-  name: z
-    .string({ required_error: 'Обязательное поле' })
-    .min(1, { message: 'Поле должно быть заполнено' }),
   file: z.any({ required_error: 'Обязательное поле' }),
   model: z.string({ invalid_type_error: 'Обязательное поле' }).optional(),
+  apiKey: z.string({ invalid_type_error: 'Обязательное поле' }).optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -36,35 +36,37 @@ interface CreateChatFormProps {
 }
 
 export const CreateChatForm: FC<CreateChatFormProps> = (props) => {
+  const nextRouter = useRouter();
   const { className } = props;
+  const [isLoading, setIsLoading] = useState(false);
   const [isStandard, setIsStandard] = useState(true);
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     const formData = new FormData();
     const file = data.file[0];
     formData.append('file', file);
-    formData.append('name', data.name);
-    if (data.model) {
-      formData.append('model', data.model);
-    }
+    const chats = JSON.parse(localStorage.getItem('chats') ?? '[]');
+    const newChat = {
+      id: Date.now().toString(),
+      name: file.name,
+      modelType: isStandard ? 'openrouter' : 'custom',
+      apiKey: data.apiKey,
+      apiUrl: isStandard ? null : data.model,
+    };
+    localStorage.setItem('chats', JSON.stringify([...chats, newChat]));
 
-    // const response = fetch('/api/chat/create', {
-    //   method: 'POST',
-    //   body: formData,
-    // });
+    setIsLoading(true);
+    nextRouter.push(router.chat(newChat.id));
 
-    // if (!response.ok) {
-    //   return;
-    // }
+    const response = await fetch('http://backend:8000/upload', {
+      method: 'POST',
+      body: formData,
+    });
 
-    // const responseData = await response.json();
-
-    // redirect(router.chat(responseData.id));
-
-    console.log(data, formData.get('file'), formData.get('name'));
+    console.log(response);
   };
 
   return (
@@ -75,20 +77,6 @@ export const CreateChatForm: FC<CreateChatFormProps> = (props) => {
       <CardContent>
         <Form {...form}>
           <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
-            <FormField
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Название</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Новый чат" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-              control={form.control}
-              name="name"
-            />
-
             <FormField
               render={() => (
                 <FormItem>
@@ -123,25 +111,39 @@ export const CreateChatForm: FC<CreateChatFormProps> = (props) => {
             </div>
 
             {!isStandard && (
-              <FormField
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ссылка на модель</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://openai.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-                control={form.control}
-                name="model"
-              />
+              <>
+                <FormField
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Ссылка на модель</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://openai.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                  control={form.control}
+                  name="model"
+                />
+                <FormField
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>api key</FormLabel>
+                      <FormControl>
+                        <Input placeholder="sk-or-v1-6635db51dfd..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                  control={form.control}
+                  name="apiKey"
+                />
+              </>
             )}
 
-            <Button type="submit" onClick={() => window.location.href = '/chat/1'}>
+            <Button disabled={isLoading} type="submit">
               Создать
             </Button>
-            
           </form>
         </Form>
       </CardContent>
