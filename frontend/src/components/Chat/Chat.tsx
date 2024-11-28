@@ -24,7 +24,7 @@ export const Chat: FC<ChatProps> = (props) => {
     setMessage('');
     const chat: { id: string; name: string; modelType: string; apiKey: string; apiUrl: string } =
       JSON.parse(localStorage.getItem('chats') ?? '[]').find(
-        (chat: { id: string }) => chat.id === id,
+        (chat: { id: string }) => chat.id.toString() === id,
       );
 
     const response = await fetch('http://backend:8000/query', {
