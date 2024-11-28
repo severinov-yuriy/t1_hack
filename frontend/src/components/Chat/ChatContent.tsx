@@ -14,10 +14,10 @@ export const ChatContent: FC<ChatContentProps> = (props) => {
   const ref = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
-    if (ref.current) {
+    if (ref.current && children) {
       ref.current.scrollTop = ref.current.scrollHeight;
     }
-  }, []);
+  }, [children]);
 
   return (
     <Card ref={ref} className="h-full my-3 py-3 overflow-scroll">
