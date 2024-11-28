@@ -12,40 +12,13 @@ services:
     depends_on:
       - backend
 
-  database:
-    container_name: db
-    image: docker.io/postgres:15
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: rag
-    volumes:
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
-
-  milvus:
-    container_name: milvus
-    image: milvusdb/milvus:latest
-    ports:
-      - "19530:19530"
-      - "9091:9091"
-    environment:
-      MILVUS_LOG_LEVEL: debug
-
   backend:
     build:
       context: ./RAG
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
-    depends_on:
-      - database
-      - milvus
-    environment:
-      DATABASE_URL: "postgresql://user:password@database:5432/rag"
-      MILVUS_HOST: "milvus"
-      MILVUS_PORT: "19530"
+
 
 volumes:
-  db_data:
+  db_user:

@@ -1,121 +1,78 @@
-from pymilvus import connections, FieldSchema, CollectionSchema, DataType, Collection, utility
-from sqlalchemy import create_engine, Column, Integer, String, MetaData, Table, insert, select
-from sqlalchemy.orm import sessionmaker
-from typing import List, Tuple
+import faiss
 import numpy as np
-
-# Подключение к PostgreSQL
-DATABASE_URL = "postgresql://user:password@database:5432/rag"
-
-# SQLAlchemy Engine и Metadata
-engine = create_engine(DATABASE_URL)
-metadata = MetaData()
-
-# Определение таблицы метаданных
-metadata_table = Table(
-    "metadata", metadata,
-    Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("file_path", String, nullable=False)
-)
-
-# Создаем таблицы, если их нет
-metadata.create_all(engine)
-
-# SQLAlchemy Session
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Milvus конфигурация
-MILVUS_HOST = "milvus"
-MILVUS_PORT = "19530"
-VECTOR_COLLECTION_NAME = "text_vectors"
-
-# Подключение к Milvus
-connections.connect(alias="default", host=MILVUS_HOST, port=MILVUS_PORT)
-
-# Определение коллекции в Milvus
-fields = [
-    FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
-    FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=768)  # Задайте правильную размерность
-]
-schema = CollectionSchema(fields=fields, description="Collection for text embeddings")
-
-# Создание коллекции, если она еще не создана
-if not utility.has_collection(VECTOR_COLLECTION_NAME):
-    collection = Collection(name=VECTOR_COLLECTION_NAME, schema=schema)
-else:
-    collection = Collection(name=VECTOR_COLLECTION_NAME)
+import sqlite3
+from typing import List, Tuple
 
 
 class VectorStore:
-    def __init__(self):
+    def __init__(self, vector_dim: int, index_path: str = "data/vector_store.index", metadata_db: str = "data/chunks.db"):
         """
-        Инициализация VectorStore для работы с Milvus и PostgreSQL.
+        Инициализация векторного хранилища.
+        :param vector_dim: Размерность векторов.
+        :param index_path: Путь к файлу векторного индекса.
+        :param metadata_db: Путь к базе данных метаданных.
         """
-        self.collection = collection
+        self.vector_dim = vector_dim
+        self.index_path = index_path
+        self.metadata_db = metadata_db
+        self.index = faiss.IndexFlatL2(vector_dim)
+        self._setup_metadata_db()
+
+    def _setup_metadata_db(self) -> None:
+        """
+        Инициализация базы данных для метаданных.
+        """
+        with sqlite3.connect(self.metadata_db) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS metadata (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    file_path TEXT NOT NULL
+                );
+            """)
+            conn.commit()
 
     def add_vectors(self, vectors: List[List[float]], metadata: List[str]) -> None:
         """
-        Добавление векторов и метаданных в Milvus и PostgreSQL.
-        :param vectors: Список векторов.
-        :param metadata: Список метаданных (пути к файлам).
+        Добавление векторов в хранилище.
+        :param vectors: Список векторных представлений.
+        :param metadata: Список метаданных (например, идентификаторы текстов).
         """
-        # Сохраняем метаданные в PostgreSQL
-        session = SessionLocal()
-        try:
-            insert_stmt = insert(metadata_table).values([{"file_path": m} for m in metadata])
-            session.execute(insert_stmt)
-            session.commit()
-        except Exception as e:
-            session.rollback()
-            print(f"Error saving metadata to Postgres: {e}")
-        finally:
-            session.close()
+        vectors_np = np.array(vectors, dtype="float32")
+        self.index.add(vectors_np)
 
-        # Сохраняем векторы в Milvus
-        embeddings = np.array(vectors, dtype="float32")
-        self.collection.insert([embeddings])
-        self.collection.load()
+        with sqlite3.connect(self.metadata_db) as conn:
+            cursor = conn.cursor()
+            cursor.executemany("INSERT INTO metadata (file_path) VALUES (?);", [(m,) for m in metadata])
+            conn.commit()
+
 
     def search(self, query_vector: List[float], top_k: int = 10) -> List[Tuple[int, float, str]]:
         """
-        Поиск ближайших соседей по вектору в Milvus и извлечение метаданных из PostgreSQL.
+        Поиск ближайших соседей по вектору.
         :param query_vector: Вектор запроса.
         :param top_k: Количество ближайших соседей.
-        :return: Список кортежей (id, расстояние, file_path).
+        :return: Список индексов, расстояний и метаданных для ближайших соседей.
         """
         query_np = np.array([query_vector], dtype="float32")
+        distances, indices = self.index.search(query_np, top_k)
 
-        # Выполняем поиск в Milvus
-        results = self.collection.search(
-            data=query_np,
-            anns_field="embedding",
-            param={"metric_type": "L2", "params": {"nprobe": 10}},
-            limit=top_k
-        )
+        return [(int(idx), float(dist)) for idx, dist in zip(indices[0], distances[0])]
 
-        # Извлекаем идентификаторы найденных векторов
-        ids = [hit.id for hit in results[0]]
+    def save_index(self) -> None:
+        """
+        Сохранение индекса на диск.
+        """
+        faiss.write_index(self.index, self.index_path)
 
-        # Получаем метаданные из PostgreSQL
-        session = SessionLocal()
-        try:
-            query = select(metadata_table).where(metadata_table.c.id.in_(ids))
-            rows = session.execute(query).fetchall()
-            metadata = {row.id: row.file_path for row in rows}
-        except Exception as e:
-            print(f"Error fetching metadata: {e}")
-            metadata = {}
-        finally:
-            session.close()
-
-        # Сопоставляем результаты поиска с метаданными
-        return [
-            (hit.id, hit.distance, metadata.get(hit.id, "Unknown"))
-            for hit in results[0]
-        ]
+    def load_index(self) -> None:
+        """
+        Загрузка индекса с диска.
+        """
+        self.index = faiss.read_index(self.index_path)
 
     def get_vector_count(self) -> int:
         """
-        Получить количество векторов в коллекции Milvus.
+        Возвращает количество векторов в индексе.
         """
-        return self.collection.num_entities
+        return self.index.ntotal

@@ -5,23 +5,9 @@
 body {
   font-family: Arial, Helvetica, sans-serif;
 }
-.tiptap {
-  outline: none;
-}
-.tiptap h1 {
-  font-size: 2.25rem /* 36px */;
-  line-height: 2.5rem /* 40px */;
-  font-weight: bold;
-}
-.tiptap h2 {
-  font-weight: bold;
-  font-size: 1.875rem;
-  line-height: 2.25rem;
-}
-.tiptap h3 {
-  font-weight: bold;
-  font-size: 1.5rem;
-  line-height: 2rem;
+
+* {
+  box-sizing: border-box;
 }
 
 @layer utilities {
