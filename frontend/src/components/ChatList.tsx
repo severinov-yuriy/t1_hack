@@ -18,11 +18,11 @@ export const ChatList = () => {
     <div className="flex flex-wrap gap-4">
       {chats.map((chat) => (
         <Link key={chat.id} href={router.chat(chat.id)}>
-          <Card className="flex items-center justify-center h-10 w-10">{chat.name}</Card>
+          <Card className="flex items-center justify-between h-56 w-56">{chat.name}</Card>
         </Link>
       ))}
       <Link href={router.newChat()}>
-        <Card className="flex items-center justify-center h-10 w-10">
+        <Card className="flex items-center justify-center h-56 w-56">
           <Plus size="24" />
         </Card>
       </Link>
